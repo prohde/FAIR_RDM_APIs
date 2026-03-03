@@ -41,15 +41,15 @@ def run_sparql_query(orcid: str):
         SELECT DISTINCT
           ?dataset ?author ?author_label ?orcid ?title ?contact_person ?license
         WHERE {{
-          ?author     rdf:type       pro:Author .
-          ?author     owl:sameAS     ?orcid .
-          ?author     rdfs:label     ?author_label .
-          ?dataset    a              dcat:Dataset .
-          ?dataset    dct:creator    ?author .
-          ?dataset    dct:title      ?title .
-          ?dataset    dcat:contactPoint    ?contact_person .
-           optional {{ ?dataset dct:license ?license }}
-          FILTER (CONTAINS(STR(?author), "{author_id}"))
+          BIND (<{author_id}> as ?author)
+          ?author     rdf:type             pro:Author .
+          ?author     owl:sameAS           ?orcid .
+          ?author     rdfs:label           ?author_label .
+          ?dataset    rdf:type             dcat:Dataset .
+          ?dataset    dct:creator          ?author .
+          ?dataset    dct:title            ?title .
+          optional {{ ?dataset dcat:contactPoint ?contact_person }} .
+          optional {{ ?dataset dct:license ?license }} .
         }}
         """
 
@@ -58,7 +58,12 @@ def run_sparql_query(orcid: str):
         sparql.setQuery(dataset_query)
         sparql.setReturnFormat(JSON)
 
-        return(sparql.query().convert()["results"]["bindings"])
+        try:
+            bindings = sparql.query().convert()["results"]["bindings"]
+
+            return [{k: v['value'] for k, v in row.items()} for row in bindings]
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"SPARQL Error: {str(e)}")
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"SPARQL Error: {str(e)}")
