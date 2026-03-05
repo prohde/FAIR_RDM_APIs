@@ -1,1 +1,5 @@
 *~undo-tree~
+.idea/
+venv/
+**/__pycache__/
+*.pyc
