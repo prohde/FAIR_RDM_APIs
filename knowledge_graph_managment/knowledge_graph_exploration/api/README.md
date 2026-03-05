@@ -2,6 +2,10 @@
 
 The api presented here contains routes to explore the content of a knowledgegraph
 
+## routes
+get_dataset_attributes_by_paper_doi [POST / GET]
+"/get_dataset_attributes_by_author_orcid" [POST / GET]
+
 # api ip and port
 
 127.0.0.1:5000
