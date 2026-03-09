@@ -1,0 +1,3 @@
+[submodule "jupyterhub-standalone"]
+	path = jupyterhub-standalone
+	url = https://github.com/SDM-TIB/jupyterhub-standalone.git
