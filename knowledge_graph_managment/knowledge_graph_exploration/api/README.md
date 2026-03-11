@@ -1,6 +1,6 @@
 # api documentation
 
-The api presented here contains routes to explore the content of a knowledgegraph
+The api presented here contains routes to explore the content of a knowledge graph
 
 ## routes
 
