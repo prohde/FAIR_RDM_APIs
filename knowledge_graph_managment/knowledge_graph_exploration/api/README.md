@@ -1,16 +1,26 @@
-# api documentation
+# API documentation
 
-The api presented here contains routes to explore the content of a knowledge graph
+The API is used to gain information about the information present in the knowledge graph.
+
+# Description
+
+This API is a python script that can be run locally after installing the requirements. The default URL for the API is http://0.0.0.0:5000. The API returns information about the datasets in correlation with a paper or a authors ORCID.
+
+# install requirements
+```bash
+pip install -r requirements.txt
+```
+
+# run the API
+```bash
+python api.py
+```
 
 ## routes
 
 get_dataset_attributes_by_paper_doi [POST / GET]
 
 get_dataset_attributes_by_author_orcid [POST / GET]
-
-# api ip and port
-
-127.0.0.1:5000
 
 # 1) Return Datasets in correlation to a Paper DOI
 ## Output
