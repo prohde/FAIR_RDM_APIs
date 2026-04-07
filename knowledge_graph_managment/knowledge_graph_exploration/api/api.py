@@ -3,13 +3,19 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 from typing import List
-from SPARQLWrapper import SPARQLWrapper, JSON
+from SPARQLWrapper import SPARQLWrapper, JSON, POST
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Knowledge Graph Exploration API")
 ENDPOINT = "https://labs.tib.eu/sdm/ldm_kg/sparql"
+
+def get_sparql_client():
+    sparql = SPARQLWrapper(ENDPOINT)
+    sparql.setReturnFormat(JSON)
+    sparql.setMethod(POST)
+    return sparql
 
 monovalue_set = {
     'http://purl.org/dc/terms/modified',
@@ -19,7 +25,6 @@ monovalue_set = {
     'http://xmlns.com/foaf/0.1/page',
     'http://purl.org/dc/terms/identifier',
     'http://purl.org/dc/terms/issued',
-    'http://purl.org/dc/terms/publisher',
     'http://purl.org/dc/terms/title',
     'http://purl.org/spar/datacite/usesIdentifierScheme',
     'http://www.w3.org/2006/vcard/ns#fn',
@@ -47,6 +52,7 @@ keyword_string = 'http://www.w3.org/ns/dcat#keyword'
 landing_page_string = 'http://www.w3.org/ns/dcat#landingPage'
 is_described_by_string = 'http://purl.org/spar/datacite/isDescribedBy'
 citation_string = 'http://schema.org/citation'
+publisher_string = 'http://purl.org/dc/terms/publisher'
 
 class AuthorOrcidRequest(BaseModel):
     author_orcids: List[str]
@@ -118,8 +124,7 @@ def get_bulk_dataset_information_helper(dataset_uris: List[str]) -> dict:
     if not dataset_uris:
         return {}
 
-    sparql = SPARQLWrapper(ENDPOINT)
-    sparql.setReturnFormat(JSON)
+    sparql = get_sparql_client()
 
     values_string = " ".join([f"<{uri}>" for uri in dataset_uris])
 
@@ -132,6 +137,9 @@ def get_bulk_dataset_information_helper(dataset_uris: List[str]) -> dict:
         ?dataset ?p ?o .
     }}
     """
+
+    print(query)
+
     sparql.setQuery(query)
     try:
         main_query_result = sparql.query().convert()['results']['bindings']
@@ -144,13 +152,15 @@ def get_bulk_dataset_information_helper(dataset_uris: List[str]) -> dict:
 
     local_sets = {
         uri: {"type_set": set(), "landing_page_set": set(), "is_described_by_set": set(),
-              "citation_set": set(), "creator_set": set(), "distribution_set": set(), "keyword_set": set()}
+              "citation_set": set(), "creator_set": set(), "distribution_set": set(), "keyword_set": set(),
+              "publisher_set": set()}
         for uri in dataset_uris
     }
 
     global_creator_set = set()
     global_distribution_set = set()
     global_keyword_set = set()
+    global_publisher_set = set()
 
     # Sort the massive response into our local dataset groupings
     for row in main_query_result:
@@ -181,6 +191,9 @@ def get_bulk_dataset_information_helper(dataset_uris: List[str]) -> dict:
             elif p_value == distribution_string:
                 local_sets[ds_uri]["distribution_set"].add(o_value)
                 global_distribution_set.add(o_value)
+            elif p_value == publisher_string:
+                local_sets[ds_uri]["publisher_set"].add(o_value)
+                global_publisher_set.add(o_value)
             elif p_value == keyword_string:
                 local_sets[ds_uri]["keyword_set"].add(o_value)
                 global_keyword_set.add(o_value)
@@ -189,6 +202,7 @@ def get_bulk_dataset_information_helper(dataset_uris: List[str]) -> dict:
     creators_data = {item['uri']: item for item in fetch_nested_entities(sparql, global_creator_set, "creator")} if global_creator_set else {}
     distributions_data = {item['uri']: item for item in fetch_nested_entities(sparql, global_distribution_set, "distribution")} if global_distribution_set else {}
     keywords_data = {item['uri']: item for item in fetch_nested_entities(sparql, global_keyword_set, "keyword")} if global_keyword_set else {}
+    publishers_data = {item['uri']: item for item in fetch_nested_entities(sparql, global_publisher_set, "publisher")} if global_publisher_set else {}
 
     # 3. Reassemble: Link the deep objects back to their parent datasets
     for ds_uri, sets in local_sets.items():
@@ -207,6 +221,8 @@ def get_bulk_dataset_information_helper(dataset_uris: List[str]) -> dict:
             final_results[ds_uri][distribution_string] = [distributions_data[d] for d in sets["distribution_set"] if d in distributions_data]
         if sets["keyword_set"]:
             final_results[ds_uri][keyword_string] = [keywords_data[k] for k in sets["keyword_set"] if k in keywords_data]
+        if sets["publisher_set"]:
+            final_results[ds_uri][publisher_string] = [publishers_data[k] for k in sets["publisher_set"] if k in publishers_data]
 
     return final_results
 
@@ -260,6 +276,9 @@ def get_dataset_information_by_dataset_doi_helper(dataset_doi: str):
         ?dataset ?p ?o.
     }}
     """
+
+    print(query)
+
     try:
         sparql.setQuery(query)
         results = sparql.query().convert()['results']['bindings']
@@ -373,6 +392,9 @@ def get_dataset_information_by_several_author_ldm_id_helper(author_ldm_ids: List
         OPTIONAL {{ ?dataset dct:creator ?author . }}
     }}
     """
+
+    print(query)
+
     try:
         sparql.setQuery(query)
         results = sparql.query().convert()['results']['bindings']
