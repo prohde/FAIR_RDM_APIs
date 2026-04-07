@@ -11,6 +11,15 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="Knowledge Graph Exploration API")
 ENDPOINT = "https://labs.tib.eu/sdm/ldm_kg/sparql"
 
+# development rule remove_me
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 def get_sparql_client():
     sparql = SPARQLWrapper(ENDPOINT)
     sparql.setReturnFormat(JSON)
