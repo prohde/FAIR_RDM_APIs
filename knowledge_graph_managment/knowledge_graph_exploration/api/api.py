@@ -255,7 +255,6 @@ def get_dataset_information_by_paper_doi_helper(paper_doi: str):
         BIND (<{paper_doi}> as ?is_described_by)
         ?dataset a dcat:Dataset .
         ?dataset datacite:isDescribedBy ?is_described_by .
-        ?dataset ?p ?o.
     }}
     """
     try:
@@ -280,10 +279,9 @@ def get_dataset_information_by_dataset_doi_helper(dataset_doi: str):
     SELECT DISTINCT
         ?dataset
     WHERE {{
-        BIND (<{dataset_doi}> as ?landing_page)
+        BIND (<{dataset_doi}> as ?source)
         ?dataset a dcat:Dataset .
-        ?dataset dcat:landingPage ?landing_page .
-        ?dataset ?p ?o.
+        ?dataset dct:source ?source .
     }}
     """
 
