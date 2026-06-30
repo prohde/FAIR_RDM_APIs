@@ -4,11 +4,17 @@ on:
   push:
     branches: [main]
 
+env:
+  SERVICE_PATHS: |
+    {
+      "fair_rdm_kg_exploration": "knowledge_graph_managment/knowledge_graph_exploration/api"
+    }
+
 jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      services: ${{ steps.filter.outputs.changes }}
+      services: ${{ steps.set-matrix.outputs.services }}
     steps:
       - uses: actions/checkout@v7
 
@@ -18,6 +24,15 @@ jobs:
           filters: |
             fair_rdm_kg_exploration:
               - 'knowledge_graph_managment/knowledge_graph_exploration/api/**'
+
+      - name: Build matrix
+        id: set-matrix
+        run: |
+          echo '${{ steps.filter.outputs.changes }}' > changed.json
+          echo "$SERVICE_PATHS" > paths.json
+          services=$(jq -c -s '.[0] as $changed | .[1] as $paths |
+            [$changed[] | {name: ., path: $paths[.]}]' changed.json paths.json)
+          echo "services=$services" >> "$GITHUB_OUTPUT"
 
   build-and-push:
     needs: detect-changes
@@ -46,8 +61,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v7
         with:
-          context: ./${{ matrix.service }}
+          context: ./${{ matrix.service.path }}
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:latest
-            ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:${{ steps.vars.outputs.sha_short }}
+            ghcr.io/${{ github.repository_owner }}/${{ matrix.service.name }}:latest
+            ghcr.io/${{ github.repository_owner }}/${{ matrix.service.name }}:${{ steps.vars.outputs.sha_short }}
