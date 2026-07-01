@@ -5,6 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Tuple
 from SPARQLWrapper import SPARQLWrapper, JSON, POST
 
+from fastapi import Request
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 app = FastAPI(title="Knowledge Graph Exploration API")
@@ -13,10 +15,18 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://ckan:5000"],
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logging.info(f"Incoming request: {request.method} {request.url}")
+    logging.info(f"Headers: {dict(request.headers)}")
+    response = await call_next(request)
+    return response
 
 
 def get_sparql_client():
