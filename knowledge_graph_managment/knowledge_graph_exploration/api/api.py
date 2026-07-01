@@ -26,6 +26,7 @@ async def log_requests(request: Request, call_next):
     logging.info(f"Incoming request: {request.method} {request.url}")
     logging.info(f"Headers: {dict(request.headers)}")
     response = await call_next(request)
+
     return response
 
 
