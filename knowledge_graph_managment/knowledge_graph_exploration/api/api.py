@@ -2,6 +2,7 @@ import logging, uvicorn
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from typing import List, Tuple
 from SPARQLWrapper import SPARQLWrapper, JSON, POST
 
@@ -47,6 +48,7 @@ monovalue_set = {
     "http://purl.org/dc/terms/language",
     "http://purl.org/dc/terms/conformsTo",
 }
+
 prefixes = """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX dcat: <http://www.w3.org/ns/dcat#>
 PREFIX dct: <http://purl.org/dc/terms/>
@@ -68,6 +70,11 @@ type_s, label_s, same_as_s, creator_s, dist_s, key_s, lp_s, desc_s, cit_s, pub_s
     "http://schema.org/citation",
     "http://purl.org/dc/terms/publisher",
 )
+
+
+@app.options("*")
+async def handle_options():
+    return Response(status_code=200)
 
 
 class AuthorNameRequest(BaseModel):
