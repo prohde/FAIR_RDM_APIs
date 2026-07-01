@@ -2,7 +2,6 @@ import logging, uvicorn
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
 from typing import List, Tuple
 from SPARQLWrapper import SPARQLWrapper, JSON, POST
 
@@ -12,10 +11,11 @@ app = FastAPI(title="Knowledge Graph Exploration API")
 ENDPOINT = "https://labs.tib.eu/sdm/ldm_kg/sparql"
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://ckan:5000"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 
@@ -70,11 +70,6 @@ type_s, label_s, same_as_s, creator_s, dist_s, key_s, lp_s, desc_s, cit_s, pub_s
     "http://schema.org/citation",
     "http://purl.org/dc/terms/publisher",
 )
-
-
-@app.options("*")
-async def handle_options():
-    return Response(status_code=200)
 
 
 class AuthorNameRequest(BaseModel):
