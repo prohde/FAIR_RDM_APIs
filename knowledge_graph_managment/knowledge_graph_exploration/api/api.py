@@ -13,9 +13,9 @@ app = FastAPI(title="Knowledge Graph Exploration API")
 ENDPOINT = "https://labs.tib.eu/sdm/ldm_kg/sparql"
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://ckan:5000"],
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
 )
