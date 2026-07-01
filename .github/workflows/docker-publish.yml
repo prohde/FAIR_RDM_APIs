@@ -67,14 +67,3 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/${{ matrix.service.name }}:latest
             ghcr.io/${{ github.repository_owner }}/${{ matrix.service.name }}:${{ steps.vars.outputs.sha_short }}
 
-      - name: Update package README
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          README=$(base64 -w 0 ./${{ matrix.service.path }}/README.md)
-          curl -s -X PATCH \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            https://api.github.com/user/packages/container/${{ matrix.service.name }} \
-            -d "{\"readme\": \"$README\"}"
-
